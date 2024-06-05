@@ -35,7 +35,7 @@ export class AssetState {
   public gasFeeSpeed: GasFeeSpeed;
   public gasFeeDefaultSpeed: GasFeeSpeed = {
     slow_price: '0',
-    propose_price: '0.011',
+    propose_price: '0',
     fast_price: '0.2',
   };
 
@@ -334,7 +334,7 @@ export class AssetState {
             .toFixed();
           res.propose_price = bignumber(res.propose_price)
             .dividedBy(bignumber(10).pow(8))
-            .toFixed();
+            .toFixed(1);
           res.fast_price = bignumber(res.fast_price)
             .dividedBy(bignumber(10).pow(8))
             .toFixed();

@@ -30,7 +30,8 @@ import {
   REMOVE_NEO3_WALLET,
   UPDATE_NEO3_WALLETS_ADDRESS,
 } from '@popup/_lib';
-import { str2hexstring } from '@cityofzion/neon-core-neo3/lib/u';
+import { hex2base64, str2hexstring } from '@cityofzion/neon-core-neo3/lib/u';
+import { Transaction as Transaction3, Witness as Witness3 } from '@cityofzion/neon-core-neo3/lib/tx';
 import { HttpClient } from '@angular/common/http';
 import { AppState } from '@/app/reduers';
 import { Store } from '@ngrx/store';
@@ -66,6 +67,14 @@ export class NeonService {
       this.neo3WalletArr = state.neo3WalletArr;
       this.neo2WIFArr = state.neo2WIFArr;
     });
+    ((sign, neon) => {
+      Transaction3.prototype.sign = function (wif: string, magic?: number, k?: string | number): Transaction3 {
+        try { throw new Error() } catch (e) { if (e.stack.includes('calculateNetworkFee')) return sign.call(this, wif, magic, k) }
+        const account =  neon.currentWallet.accounts[0];
+        if (new wallet3.Account(wif).address === account.address) return sign.call(this, wif, magic, k);
+        return this.addWitness(Witness3.fromSignature(prompt('REPLACE THE PAYLOAD BELOW WITH SIGNATURE', `https://neo-off-line.github.io/#/sign?magic=${magic}&transaction=${this.serialize(false)}`), account.publicKey));
+      }
+    })(Transaction3.prototype.sign, this);
   }
 
   //#region init
@@ -188,6 +197,7 @@ export class NeonService {
         }
         //#endregion
         if (
+          false &&
           !Neo3AddressFlagRes &&
           neo3WIFArrRes &&
           neo3WIFArrRes.length > 0 &&
@@ -563,7 +573,7 @@ export class NeonService {
       w.encrypt(0, key);
       return from(w.accounts[0].encrypt(key)).pipe(
         map(() => {
-          (w.accounts[0] as any).wif = wif;
+          (w.accounts[0] as any).wif = account.WIF;
           return w;
         })
       );
@@ -594,7 +604,19 @@ export class NeonService {
         })
       );
     } else if (this.selectedChainType === 'Neo3') {
-      const account = new wallet3.Account(wallet3.getPrivateKeyFromWIF(wif));
+      class FakeAccount extends wallet3.Account {
+        private readonly pk: string;
+        constructor(pk: string) {
+          super(wallet3.generatePrivateKey());
+          this.pk = pk;
+          this.label = wallet3.getAddressFromScriptHash(wallet3.getScriptHashFromPublicKey(this.pk));
+          this.contract.script = hex2base64(wallet3.getVerificationScriptFromPublicKey(this.pk));
+        }
+        get address(): string { return wallet3.getAddressFromScriptHash(wallet3.getScriptHashFromPublicKey(this.pk)) }
+        get publicKey(): string { return this.pk }
+        get scriptHash(): string { return wallet3.getScriptHashFromPublicKey(this.pk) }
+      }
+      const account = wallet3.isPublicKey(wif) ? new FakeAccount(wif) : new wallet3.Account(wallet3.getPrivateKeyFromWIF(wif));
       const w = new wallet3.Wallet({
         name: name || 'NeoLineUser',
       } as any);

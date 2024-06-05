@@ -36,7 +36,7 @@ function checkWIF(chainType: ChainType): ValidatorFn {
         valid = true;
       }
     } else {
-      if (wallet3.isWIF(wif) || wallet3.isPrivateKey(wif)) {
+      if (wallet3.isWIF(wif) || wallet3.isPrivateKey(wif) || wallet3.isPublicKey(wif)) {
         valid = true;
       }
     }
