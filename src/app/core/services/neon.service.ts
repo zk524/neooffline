@@ -72,7 +72,7 @@ export class NeonService {
         try { throw new Error() } catch (e) { if (e.stack.includes('calculateNetworkFee')) return sign.call(this, wif, magic, k) }
         const account =  neon.currentWallet.accounts[0];
         if (new wallet3.Account(wif).address === account.address) return sign.call(this, wif, magic, k);
-        return this.addWitness(Witness3.fromSignature(prompt('REPLACE THE PAYLOAD BELOW WITH SIGNATURE', `https://neo-off-line.github.io/#/sign?magic=${magic}&transaction=${this.serialize(false)}`), account.publicKey));
+        return this.addWitness(Witness3.fromSignature(((sig)=>sig.length === 128 ? sig : sig.match(/^304[456]022[01]0*([0-9a-f]{64})022[01]0*([0-9a-f]{64})$/).slice(1).join(''))(prompt('REPLACE THE PAYLOAD BELOW WITH SIGNATURE', `https://neo-off-line.github.io/#/sign?magic=${magic}&transaction=${this.serialize(false)}`)), account.publicKey));
       }
     })(Transaction3.prototype.sign, this);
   }
